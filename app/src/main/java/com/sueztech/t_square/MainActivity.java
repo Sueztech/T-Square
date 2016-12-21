@@ -1,5 +1,6 @@
 package com.sueztech.t_square;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -37,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
+
+		startActivity(new Intent(this, LoginActivity.class));
 	}
 
 	@Override
