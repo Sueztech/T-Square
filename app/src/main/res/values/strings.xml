@@ -27,5 +27,6 @@
     <string name="error_fetching_login">An error occurred while logging in.</string>
     <string name="error_submitting_login">An error occurred while logging in.</string>
     <string name="error_internet_access">No internet access detected.</string>
+    <string name="nav_logout">Logout</string>
 
 </resources>

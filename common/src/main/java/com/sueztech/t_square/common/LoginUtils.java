@@ -24,6 +24,9 @@ public class LoginUtils {
 	public static final int ERR_GETLOGIN = 2;
 	public static final int ERR_PUTLOGIN = 3;
 	public static final int ERR_SIGNINRQ = 4;
+
+	public static final String LOGIN_TOKEN = "LOGIN_TOKEN";
+
 	private static final String LOGIN_URL = "https://login.gatech.edu/cas/login";
 
 	public LoginStatus doLogin (String username, String password) {

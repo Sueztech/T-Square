@@ -286,7 +286,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
 			if (status.loggedIn) {
 				Intent result = new Intent();
-				result.putExtra("CASTGT", status.payload);
+				result.putExtra(LoginUtils.LOGIN_TOKEN, status.payload);
 				setResult(Activity.RESULT_OK, result);
 				finish();
 			} else {

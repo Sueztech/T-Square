@@ -15,11 +15,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.sueztech.t_square.common.LoginUtils;
+
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-	private static final int CASTGT_REQUEST = 1;
+	private static final int LOGIN_REQUEST = 1;
 
-	private String CASTGT;
+	private String mLoginToken;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -44,20 +46,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
 
-		CASTGT = getPreferences(MODE_PRIVATE).getString("CASTGT", "BLANK");
-		if (CASTGT.equals("BLANK"))
-			startActivityForResult(new Intent(this, LoginActivity.class), CASTGT_REQUEST);
+		mLoginToken = getPreferences(MODE_PRIVATE).getString(LoginUtils.LOGIN_TOKEN, null);
+		if (mLoginToken == null)
+			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
 
 	}
 
 	@Override
 	protected void onActivityResult (int requestCode, int resultCode, Intent data) {
 		// Check which request we're responding to
-		if (requestCode == CASTGT_REQUEST) {
+		if (requestCode == LOGIN_REQUEST) {
 			// Make sure the request was successful
 			if (resultCode == RESULT_OK) {
-				CASTGT = data.getStringExtra("CASTGT");
-				getPreferences(MODE_PRIVATE).edit().putString("CASTGT", CASTGT).apply();
+				mLoginToken = data.getStringExtra(LoginUtils.LOGIN_TOKEN);
+				getPreferences(MODE_PRIVATE).edit().putString(LoginUtils.LOGIN_TOKEN, mLoginToken).apply();
 			} else {
 				finish();
 			}
@@ -105,15 +107,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		if (id == R.id.nav_camera) {
 			// Handle the camera action
 		} else if (id == R.id.nav_gallery) {
-
+			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
 		} else if (id == R.id.nav_slideshow) {
-
+			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
 		} else if (id == R.id.nav_manage) {
-
+			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
 		} else if (id == R.id.nav_share) {
-
+			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
 		} else if (id == R.id.nav_send) {
-
+			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
+		} else if (id == R.id.nav_logout) {
+			getPreferences(MODE_PRIVATE).edit().remove(LoginUtils.LOGIN_TOKEN).apply();
+			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
 		}
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
