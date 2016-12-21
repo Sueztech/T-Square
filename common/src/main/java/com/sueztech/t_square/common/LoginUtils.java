@@ -111,9 +111,9 @@ public class LoginUtils {
 
 	public class LoginStatus {
 
-		public boolean loggedIn;
-		public int errorMsg;
-		public String payload;
+		public final boolean loggedIn;
+		public final int errorMsg;
+		public final String payload;
 
 		public LoginStatus (boolean loggedIn, int errorMsg, String payload) {
 			this.loggedIn = loggedIn;

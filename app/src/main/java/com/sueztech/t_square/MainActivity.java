@@ -19,6 +19,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 	private static final int CASTGT_REQUEST = 1;
 
+	private String CASTGT;
+
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -42,7 +44,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
 
-		startActivityForResult(new Intent(this, LoginActivity.class), CASTGT_REQUEST);
+		CASTGT = getPreferences(MODE_PRIVATE).getString("CASTGT", "BLANK");
+		if (CASTGT.equals("BLANK"))
+			startActivityForResult(new Intent(this, LoginActivity.class), CASTGT_REQUEST);
+
 	}
 
 	@Override
@@ -51,7 +56,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		if (requestCode == CASTGT_REQUEST) {
 			// Make sure the request was successful
 			if (resultCode == RESULT_OK) {
-				String CASTGT = data.getStringExtra("CASTGT");
+				CASTGT = data.getStringExtra("CASTGT");
+				getPreferences(MODE_PRIVATE).edit().putString("CASTGT", CASTGT).apply();
+			} else {
+				finish();
 			}
 		}
 	}

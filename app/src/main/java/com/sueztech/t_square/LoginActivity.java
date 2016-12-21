@@ -255,7 +255,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		String[] PROJECTION = {ContactsContract.CommonDataKinds.Email.ADDRESS, ContactsContract.CommonDataKinds.Email.IS_PRIMARY,};
 
 		int ADDRESS = 0;
-		int IS_PRIMARY = 1;
+		//		int IS_PRIMARY = 1;
 	}
 
 	/**
