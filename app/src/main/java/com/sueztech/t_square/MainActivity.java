@@ -2,6 +2,7 @@ package com.sueztech.t_square;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -15,6 +16,8 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+	private static final int CASTGT_REQUEST = 1;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -33,13 +36,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 		ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-		drawer.setDrawerListener(toggle);
+		drawer.addDrawerListener(toggle);
 		toggle.syncState();
 
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
 
-		startActivity(new Intent(this, LoginActivity.class));
+		startActivityForResult(new Intent(this, LoginActivity.class), CASTGT_REQUEST);
+	}
+
+	@Override
+	protected void onActivityResult (int requestCode, int resultCode, Intent data) {
+		// Check which request we're responding to
+		if (requestCode == CASTGT_REQUEST) {
+			// Make sure the request was successful
+			if (resultCode == RESULT_OK) {
+				String CASTGT = data.getStringExtra("CASTGT");
+			}
+		}
 	}
 
 	@Override
@@ -76,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 	@SuppressWarnings ("StatementWithEmptyBody")
 	@Override
-	public boolean onNavigationItemSelected (MenuItem item) {
+	public boolean onNavigationItemSelected (@NonNull MenuItem item) {
 		// Handle navigation view item clicks here.
 		int id = item.getItemId();
 

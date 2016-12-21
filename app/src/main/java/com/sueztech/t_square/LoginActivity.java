@@ -1,9 +1,11 @@
 package com.sueztech.t_square;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.app.ProgressDialog;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -162,10 +164,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 			mPasswordView.setError(getString(R.string.error_field_required));
 			focusView = mPasswordView;
 			cancel = true;
-		} else if (!isPasswordValid(password)) {
-			mPasswordView.setError(getString(R.string.error_invalid_password));
-			focusView = mPasswordView;
-			cancel = true;
+			//		} else if (!isPasswordValid(password)) {
+			//			mPasswordView.setError(getString(R.string.error_invalid_password));
+			//			focusView = mPasswordView;
+			//			cancel = true;
 		}
 
 		// Check for a valid email address.
@@ -173,10 +175,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 			mEmailView.setError(getString(R.string.error_field_required));
 			focusView = mEmailView;
 			cancel = true;
-		} else if (!isEmailValid(email)) {
-			mEmailView.setError(getString(R.string.error_invalid_email));
-			focusView = mEmailView;
-			cancel = true;
+			//		} else if (!isEmailValid(email)) {
+			//			mEmailView.setError(getString(R.string.error_invalid_email));
+			//			focusView = mEmailView;
+			//			cancel = true;
 		}
 
 		if (cancel) {
@@ -192,14 +194,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		}
 	}
 
-	private boolean isEmailValid (String email) {
-		//		return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches();
-		return true;
-	}
-
-	private boolean isPasswordValid (String password) {
-		return true;
-	}
+	//	private boolean isEmailValid (String email) {
+	//		return true;
+	//	}
+	//
+	//	private boolean isPasswordValid (String password) {
+	//		return true;
+	//	}
 
 	/**
 	 * Shows the progress UI and hides the login form.
@@ -261,7 +262,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 	 * Represents an asynchronous login/registration task used to authenticate
 	 * the user.
 	 */
-	public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+	public class UserLoginTask extends AsyncTask<Void, Void, LoginUtils.LoginStatus> {
 
 		private final String mEmail;
 		private final String mPassword;
@@ -272,22 +273,35 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		}
 
 		@Override
-		protected Boolean doInBackground (Void... params) {
+		protected LoginUtils.LoginStatus doInBackground (Void... params) {
 
-			LoginUtils.LoginStatus loginStatus = new LoginUtils().doLogin(mEmail, mPassword);
-			return loginStatus.loggedIn;
+			return new LoginUtils().doLogin(mEmail, mPassword);
 
 		}
 
 		@Override
-		protected void onPostExecute (final Boolean success) {
+		protected void onPostExecute (final LoginUtils.LoginStatus status) {
 			mAuthTask = null;
 			showProgress(false);
 
-			if (success) {
+			if (status.loggedIn) {
+				Intent result = new Intent();
+				result.putExtra("CASTGT", status.payload);
+				setResult(Activity.RESULT_OK, result);
 				finish();
 			} else {
-				mPasswordView.setError(getString(R.string.error_incorrect_password));
+				if (status.errorMsg == LoginUtils.ERR_NOERROR)
+					mPasswordView.setError(getString(R.string.error_incorrect_password));
+				else if (status.errorMsg == LoginUtils.ERR_UNEXPECT)
+					mPasswordView.setError(getString(R.string.error_unexpected));
+				else if (status.errorMsg == LoginUtils.ERR_GETLOGIN)
+					mPasswordView.setError(getString(R.string.error_fetching_login));
+				else if (status.errorMsg == LoginUtils.ERR_PUTLOGIN)
+					mPasswordView.setError(getString(R.string.error_submitting_login));
+				else if (status.errorMsg == LoginUtils.ERR_SIGNINRQ)
+					mPasswordView.setError(getString(R.string.error_internet_access));
+				else
+					mPasswordView.setError(getString(R.string.error_unexpected));
 				mPasswordView.requestFocus();
 			}
 		}
