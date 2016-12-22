@@ -34,7 +34,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.sueztech.t_square.common.LoginUtils;
+import com.sueztech.t_square.common.GTLoginUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -289,7 +289,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 	 * Represents an asynchronous login/registration task used to authenticate
 	 * the user.
 	 */
-	public class GTUserLoginTask extends AsyncTask<Void, Void, LoginUtils.LoginStatus> {
+	public class GTUserLoginTask extends AsyncTask<Void, Void, GTLoginUtils.LoginStatus> {
 
 		private final String mEmail;
 		private final String mPassword;
@@ -300,32 +300,32 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		}
 
 		@Override
-		protected LoginUtils.LoginStatus doInBackground (Void... params) {
+		protected GTLoginUtils.LoginStatus doInBackground (Void... params) {
 
-			return new LoginUtils().doGTLogin(mEmail, mPassword);
+			return new GTLoginUtils().doGTLogin(mEmail, mPassword);
 
 		}
 
 		@Override
-		protected void onPostExecute (final LoginUtils.LoginStatus status) {
+		protected void onPostExecute (final GTLoginUtils.LoginStatus status) {
 			mAuthTask = null;
 			showProgress(false);
 
 			if (status.loggedIn) {
 				Intent result = new Intent();
-				result.putExtra(LoginUtils.GT_LOGIN_TOKEN, status.payload);
+				result.putExtra(GTLoginUtils.LOGIN_TOKEN, status.payload);
 				setResult(Activity.RESULT_OK, result);
 				finish();
 			} else {
-				if (status.errorMsg == LoginUtils.ERR_NOERROR)
+				if (status.errorMsg == GTLoginUtils.ERR_NOERROR)
 					mPasswordView.setError(getString(R.string.error_incorrect_password));
-				else if (status.errorMsg == LoginUtils.ERR_UNEXPECT)
+				else if (status.errorMsg == GTLoginUtils.ERR_UNEXPECT)
 					showAlert(R.string.error_unexpected);
-				else if (status.errorMsg == LoginUtils.ERR_GETLOGIN)
+				else if (status.errorMsg == GTLoginUtils.ERR_GETLOGIN)
 					showAlert(R.string.error_fetching_login);
-				else if (status.errorMsg == LoginUtils.ERR_PUTLOGIN)
+				else if (status.errorMsg == GTLoginUtils.ERR_PUTLOGIN)
 					showAlert(R.string.error_submitting_login);
-				else if (status.errorMsg == LoginUtils.ERR_SIGNINRQ)
+				else if (status.errorMsg == GTLoginUtils.ERR_SIGNINRQ)
 					showAlert(R.string.error_internet_access);
 				else
 					showAlert(R.string.error_unexpected);

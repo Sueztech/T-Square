@@ -1,6 +1,7 @@
 package com.sueztech.t_square;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -17,13 +18,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.sueztech.t_square.common.LoginUtils;
+import com.sueztech.t_square.common.GTLoginUtils;
+import com.sueztech.t_square.common.T2LoginUtils;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
 	private static final int LOGIN_REQUEST = 1;
 
-	private String mLoginToken;
+	private String mGTLoginToken;
+	private String mT2LoginToken1;
+	private String mT2LoginToken2;
+
+	private SharedPreferences mPrefs;
 
 	private T2UserLoginTask mAuthTask = null;
 
@@ -60,13 +66,20 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 			}
 		});
 
-		mLoginToken = getPreferences(MODE_PRIVATE).getString(LoginUtils.GT_LOGIN_TOKEN, null);
-		if (mLoginToken == null)
+		mPrefs = getPreferences(MODE_PRIVATE);
+		mGTLoginToken = mPrefs.getString(GTLoginUtils.LOGIN_TOKEN, null);
+		if (mGTLoginToken == null)
 			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
 		else {
 			mSwipeRefreshLayout.setRefreshing(true);
-			mAuthTask = new T2UserLoginTask(mLoginToken);
-			mAuthTask.execute((Void) null);
+			mT2LoginToken1 = mPrefs.getString(T2LoginUtils.LOGIN_TOKEN_1, null);
+			mT2LoginToken2 = mPrefs.getString(T2LoginUtils.LOGIN_TOKEN_1, null);
+			if (mT2LoginToken1 == null | mT2LoginToken2 == null) {
+				mAuthTask = new T2UserLoginTask(mGTLoginToken);
+				mAuthTask.execute((Void) null);
+			} else {
+				refreshData();
+			}
 		}
 
 	}
@@ -77,8 +90,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		if (requestCode == LOGIN_REQUEST) {
 			// Make sure the request was successful
 			if (resultCode == RESULT_OK) {
-				mLoginToken = data.getStringExtra(LoginUtils.GT_LOGIN_TOKEN);
-				getPreferences(MODE_PRIVATE).edit().putString(LoginUtils.GT_LOGIN_TOKEN, mLoginToken).apply();
+				mGTLoginToken = data.getStringExtra(GTLoginUtils.LOGIN_TOKEN);
+				mPrefs.edit().putString(GTLoginUtils.LOGIN_TOKEN, mGTLoginToken).apply();
+				finish();
+				startActivity(getIntent());
 			} else {
 				finish();
 			}
@@ -123,20 +138,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		// Handle navigation view item clicks here.
 		int id = item.getItemId();
 
-		if (id == R.id.nav_camera) {
-			// Handle the camera action
-		} else if (id == R.id.nav_gallery) {
-			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
-		} else if (id == R.id.nav_slideshow) {
-			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
-		} else if (id == R.id.nav_manage) {
-			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
-		} else if (id == R.id.nav_share) {
-			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
-		} else if (id == R.id.nav_send) {
-			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
-		} else if (id == R.id.nav_logout) {
-			getPreferences(MODE_PRIVATE).edit().remove(LoginUtils.GT_LOGIN_TOKEN).apply();
+		if (id == R.id.nav_logout) {
+			getPreferences(MODE_PRIVATE).edit().remove(GTLoginUtils.LOGIN_TOKEN).apply();
 			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
 		}
 
@@ -146,10 +149,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 	}
 
 	public void refreshData () {
+		new T2LoginUtils(mT2LoginToken1, mT2LoginToken2).getUserId();
 		mSwipeRefreshLayout.setRefreshing(false);
 	}
 
-	public class T2UserLoginTask extends AsyncTask<Void, Void, LoginUtils.LoginStatus> {
+	public class T2UserLoginTask extends AsyncTask<Void, Void, GTLoginUtils.LoginStatus> {
 
 		private final String mLoginToken;
 
@@ -158,17 +162,17 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		}
 
 		@Override
-		protected LoginUtils.LoginStatus doInBackground (Void... params) {
+		protected GTLoginUtils.LoginStatus doInBackground (Void... params) {
 
-			return new LoginUtils().doT2Login(mLoginToken);
+			return new GTLoginUtils().doT2Login(mLoginToken);
 
 		}
 
 		@Override
-		protected void onPostExecute (final LoginUtils.LoginStatus status) {
+		protected void onPostExecute (final GTLoginUtils.LoginStatus status) {
 			mAuthTask = null;
 			Snackbar.make(findViewById(R.id.fab), status.payload, Snackbar.LENGTH_INDEFINITE).show();
-			getPreferences(MODE_PRIVATE).edit().putString(LoginUtils.T2_LOGIN_TOKEN_1, status.payload).putString(LoginUtils.T2_LOGIN_TOKEN_2, status.payload2).apply();
+			getPreferences(MODE_PRIVATE).edit().putString(T2LoginUtils.LOGIN_TOKEN_1, status.payload).putString(T2LoginUtils.LOGIN_TOKEN_2, status.payload2).apply();
 			refreshData();
 		}
 
