@@ -4,11 +4,15 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.LoaderManager.LoaderCallbacks;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.CursorLoader;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -16,7 +20,9 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -60,7 +66,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 	protected void onCreate (Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_login);
+		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
 		setupActionBar();
+
 		// Set up the login form.
 		mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
 		populateAutoComplete();
@@ -186,11 +195,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 			// form field with an error.
 			focusView.requestFocus();
 		} else {
-			// Show a progress spinner, and kick off a background task to
-			// perform the user login attempt.
-			showProgress(true);
-			mAuthTask = new UserLoginTask(email, password);
-			mAuthTask.execute((Void) null);
+
+			ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+			NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+			if (networkInfo == null || !networkInfo.isConnected()) {
+				showAlert(R.string.error_internet_access);
+			} else {
+
+				// Show a progress spinner, and kick off a background task to
+				// perform the user login attempt.
+				showProgress(true);
+				mAuthTask = new UserLoginTask(email, password);
+				mAuthTask.execute((Void) null);
+
+			}
 		}
 	}
 
@@ -210,6 +228,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 			mProgressDialog = ProgressDialog.show(this, "Signing in...", "Please wait...");
 		else
 			mProgressDialog.dismiss();
+	}
+
+	private void showAlert (final int resID) {
+		new AlertDialog.Builder(this).setMessage(resID).setPositiveButton(getString(R.string.button_ok), new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick (DialogInterface dialogInterface, int i) {
+
+			}
+		}).show();
 	}
 
 	@Override
@@ -293,15 +320,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 				if (status.errorMsg == LoginUtils.ERR_NOERROR)
 					mPasswordView.setError(getString(R.string.error_incorrect_password));
 				else if (status.errorMsg == LoginUtils.ERR_UNEXPECT)
-					mPasswordView.setError(getString(R.string.error_unexpected));
+					showAlert(R.string.error_unexpected);
 				else if (status.errorMsg == LoginUtils.ERR_GETLOGIN)
-					mPasswordView.setError(getString(R.string.error_fetching_login));
+					showAlert(R.string.error_fetching_login);
 				else if (status.errorMsg == LoginUtils.ERR_PUTLOGIN)
-					mPasswordView.setError(getString(R.string.error_submitting_login));
+					showAlert(R.string.error_submitting_login);
 				else if (status.errorMsg == LoginUtils.ERR_SIGNINRQ)
-					mPasswordView.setError(getString(R.string.error_internet_access));
+					showAlert(R.string.error_internet_access);
 				else
-					mPasswordView.setError(getString(R.string.error_unexpected));
+					showAlert(R.string.error_unexpected);
 				mPasswordView.requestFocus();
 			}
 		}
