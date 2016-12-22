@@ -54,7 +54,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 	/**
 	 * Keep track of the login task to ensure we can cancel it if requested.
 	 */
-	private UserLoginTask mAuthTask = null;
+	private GTUserLoginTask mAuthTask = null;
 
 	// UI references.
 	private AutoCompleteTextView mEmailView;
@@ -205,7 +205,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 				// Show a progress spinner, and kick off a background task to
 				// perform the user login attempt.
 				showProgress(true);
-				mAuthTask = new UserLoginTask(email, password);
+				mAuthTask = new GTUserLoginTask(email, password);
 				mAuthTask.execute((Void) null);
 
 			}
@@ -289,12 +289,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 	 * Represents an asynchronous login/registration task used to authenticate
 	 * the user.
 	 */
-	public class UserLoginTask extends AsyncTask<Void, Void, LoginUtils.LoginStatus> {
+	public class GTUserLoginTask extends AsyncTask<Void, Void, LoginUtils.LoginStatus> {
 
 		private final String mEmail;
 		private final String mPassword;
 
-		UserLoginTask (String email, String password) {
+		GTUserLoginTask (String email, String password) {
 			mEmail = email;
 			mPassword = password;
 		}
@@ -302,7 +302,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 		@Override
 		protected LoginUtils.LoginStatus doInBackground (Void... params) {
 
-			return new LoginUtils().doLogin(mEmail, mPassword);
+			return new LoginUtils().doGTLogin(mEmail, mPassword);
 
 		}
 
@@ -313,7 +313,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
 			if (status.loggedIn) {
 				Intent result = new Intent();
-				result.putExtra(LoginUtils.LOGIN_TOKEN, status.payload);
+				result.putExtra(LoginUtils.GT_LOGIN_TOKEN, status.payload);
 				setResult(Activity.RESULT_OK, result);
 				finish();
 			} else {

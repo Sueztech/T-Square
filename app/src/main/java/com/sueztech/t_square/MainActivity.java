@@ -1,6 +1,7 @@
 package com.sueztech.t_square;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -8,6 +9,7 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -22,6 +24,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 	private static final int LOGIN_REQUEST = 1;
 
 	private String mLoginToken;
+
+	private T2UserLoginTask mAuthTask = null;
+
+	private SwipeRefreshLayout mSwipeRefreshLayout;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -46,9 +52,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
 
-		mLoginToken = getPreferences(MODE_PRIVATE).getString(LoginUtils.LOGIN_TOKEN, null);
+		mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefresh);
+		mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+			@Override
+			public void onRefresh () {
+				refreshData();
+			}
+		});
+
+		mLoginToken = getPreferences(MODE_PRIVATE).getString(LoginUtils.GT_LOGIN_TOKEN, null);
 		if (mLoginToken == null)
 			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
+		else {
+			mSwipeRefreshLayout.setRefreshing(true);
+			mAuthTask = new T2UserLoginTask(mLoginToken);
+			mAuthTask.execute((Void) null);
+		}
 
 	}
 
@@ -58,8 +77,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		if (requestCode == LOGIN_REQUEST) {
 			// Make sure the request was successful
 			if (resultCode == RESULT_OK) {
-				mLoginToken = data.getStringExtra(LoginUtils.LOGIN_TOKEN);
-				getPreferences(MODE_PRIVATE).edit().putString(LoginUtils.LOGIN_TOKEN, mLoginToken).apply();
+				mLoginToken = data.getStringExtra(LoginUtils.GT_LOGIN_TOKEN);
+				getPreferences(MODE_PRIVATE).edit().putString(LoginUtils.GT_LOGIN_TOKEN, mLoginToken).apply();
 			} else {
 				finish();
 			}
@@ -117,12 +136,45 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		} else if (id == R.id.nav_send) {
 			Snackbar.make(findViewById(R.id.fab), "Not implemented yet", Snackbar.LENGTH_LONG).show();
 		} else if (id == R.id.nav_logout) {
-			getPreferences(MODE_PRIVATE).edit().remove(LoginUtils.LOGIN_TOKEN).apply();
+			getPreferences(MODE_PRIVATE).edit().remove(LoginUtils.GT_LOGIN_TOKEN).apply();
 			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
 		}
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 		drawer.closeDrawer(GravityCompat.START);
 		return true;
+	}
+
+	public void refreshData () {
+		mSwipeRefreshLayout.setRefreshing(false);
+	}
+
+	public class T2UserLoginTask extends AsyncTask<Void, Void, LoginUtils.LoginStatus> {
+
+		private final String mLoginToken;
+
+		T2UserLoginTask (String loginToken) {
+			mLoginToken = loginToken;
+		}
+
+		@Override
+		protected LoginUtils.LoginStatus doInBackground (Void... params) {
+
+			return new LoginUtils().doT2Login(mLoginToken);
+
+		}
+
+		@Override
+		protected void onPostExecute (final LoginUtils.LoginStatus status) {
+			mAuthTask = null;
+			Snackbar.make(findViewById(R.id.fab), status.payload, Snackbar.LENGTH_INDEFINITE).show();
+			getPreferences(MODE_PRIVATE).edit().putString(LoginUtils.T2_LOGIN_TOKEN_1, status.payload).putString(LoginUtils.T2_LOGIN_TOKEN_2, status.payload2).apply();
+			refreshData();
+		}
+
+		@Override
+		protected void onCancelled () {
+			mAuthTask = null;
+		}
 	}
 }
