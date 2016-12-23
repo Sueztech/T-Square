@@ -33,22 +33,34 @@ public class T2Utils {
 
 	public static class User {
 
+		private static JSONObject mJson;
+
 		private User () {
 
 		}
 
-		public static String getId () {
-
+		public static boolean refresh () {
 			String userWeb;
 			try {
 				userWeb = Utils.fetchURL(API_DIRECT_URL + "/user/current.json");
 			} catch (IOException e) {
 				e.printStackTrace();
-				return "";
+				return false;
 			}
-			JSONObject userJson = new JSONObject(userWeb);
-			return userJson.getString("id");
+			mJson = new JSONObject(userWeb);
+			return true;
+		}
 
+		public static JSONObject getJson () {
+			return mJson;
+		}
+
+		public static String getId () {
+			return mJson.getString("id");
+		}
+
+		public static String getFirstName () {
+			return mJson.getString("firstName");
 		}
 
 	}

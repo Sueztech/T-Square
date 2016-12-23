@@ -5,6 +5,10 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
+    <string name="nav_logout">Logout</string>
+
+    <string name="welcome">Welcome, %1$s.</string>
+
     <string name="action_settings">Settings</string>
     <string name="not_logged_in_name"/>
     <string name="not_logged_in_user">Not logged in</string>
@@ -21,8 +25,6 @@
     <string name="error_fetching_login">An error occurred while logging in</string>
     <string name="error_submitting_login">An error occurred while logging in</string>
     <string name="error_internet_access">No internet access detected</string>
-
-    <string name="nav_logout">Logout</string>
 
     <string name="button_ok">OK</string>
 

@@ -166,13 +166,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		@Override
 		protected String doInBackground (Void... params) {
 			T2Utils.doLogin();
-			return T2Utils.User.getId();
+			T2Utils.User.refresh();
+			return T2Utils.User.getFirstName();
 		}
 
 		@Override
-		protected void onPostExecute (final String userId) {
+		protected void onPostExecute (final String firstName) {
 			mRefreshTask = null;
-			Snackbar.make(findViewById(R.id.content_main), userId, Snackbar.LENGTH_LONG).show();
+			Snackbar.make(findViewById(R.id.content_main), getString(R.string.welcome, firstName), Snackbar.LENGTH_LONG).show();
 			mSwipeRefreshLayout.setRefreshing(false);
 		}
 
