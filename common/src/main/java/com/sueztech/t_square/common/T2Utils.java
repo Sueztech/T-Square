@@ -59,8 +59,28 @@ public class T2Utils {
 			return mJson.getString("id");
 		}
 
-		public static String getFirstName () {
-			return mJson.getString("firstName");
+		public static String getUsername () {
+			return mJson.getString("displayId");
+		}
+
+		public static class Name {
+
+			private Name () {
+
+			}
+
+			public static String getFirstName () {
+				return mJson.getString("firstName");
+			}
+
+			public static String getLastName () {
+				return mJson.getString("lastName");
+			}
+
+			public static String getDisplayName () {
+				return mJson.getString("displayName");
+			}
+
 		}
 
 	}

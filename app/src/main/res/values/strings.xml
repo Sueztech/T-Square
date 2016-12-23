@@ -26,6 +26,7 @@
     <string name="error_submitting_login">An error occurred while logging in</string>
     <string name="error_internet_access">No internet access detected</string>
 
+    <!-- Generic strings -->
     <string name="button_ok">OK</string>
 
     <string name="not_implemented">Not implemented yet</string>

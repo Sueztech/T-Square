@@ -17,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.sueztech.t_square.common.GTLoginUtils;
 import com.sueztech.t_square.common.T2Utils;
@@ -161,19 +162,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		return true;
 	}
 
+	private void updateUserInfo () {
+		((TextView) findViewById(R.id.textViewName)).setText(T2Utils.User.Name.getDisplayName());
+		((TextView) findViewById(R.id.textViewUser)).setText(T2Utils.User.getUsername());
+	}
+
 	public class RefreshTask extends AsyncTask<Void, Void, String> {
 
 		@Override
 		protected String doInBackground (Void... params) {
 			T2Utils.doLogin();
 			T2Utils.User.refresh();
-			return T2Utils.User.getFirstName();
+			return T2Utils.User.Name.getFirstName();
 		}
 
 		@Override
 		protected void onPostExecute (final String firstName) {
 			mRefreshTask = null;
 			Snackbar.make(findViewById(R.id.content_main), getString(R.string.welcome, firstName), Snackbar.LENGTH_LONG).show();
+			updateUserInfo();
 			mSwipeRefreshLayout.setRefreshing(false);
 		}
 
