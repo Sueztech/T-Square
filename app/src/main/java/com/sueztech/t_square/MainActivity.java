@@ -2,10 +2,10 @@ package com.sueztech.t_square;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.http.HttpResponseCache;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
@@ -14,26 +14,34 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.sueztech.t_square.common.GTLoginUtils;
-import com.sueztech.t_square.common.T2LoginUtils;
+import com.sueztech.t_square.common.T2Utils;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.HttpCookie;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+
+	private static final String TAG = "T2";
 
 	private static final int LOGIN_REQUEST = 1;
 
 	private String mGTLoginToken;
-	private String mT2LoginToken1;
-	private String mT2LoginToken2;
+
+	private SwipeRefreshLayout mSwipeRefreshLayout;
 
 	private SharedPreferences mPrefs;
 
-	private T2UserLoginTask mAuthTask = null;
-
-	private SwipeRefreshLayout mSwipeRefreshLayout;
+	private RefreshTask mRefreshTask = null;
 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -41,14 +49,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		setContentView(R.layout.activity_main);
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
-
-		FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-		fab.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick (View view) {
-				Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
-			}
-		});
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 		ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -62,9 +62,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
 			@Override
 			public void onRefresh () {
-				refreshData();
+				mRefreshTask = new RefreshTask();
+				mRefreshTask.execute((Void) null);
 			}
 		});
+
+		try {
+			File httpCacheDir = new File(getCacheDir(), "http");
+			long httpCacheSize = 10 * 1024 * 1024; // 10 MiB
+			HttpResponseCache.install(httpCacheDir, httpCacheSize);
+		} catch (IOException e) {
+			Log.i(TAG, "HTTP response cache installation failed:" + e);
+		}
 
 		mPrefs = getPreferences(MODE_PRIVATE);
 		mGTLoginToken = mPrefs.getString(GTLoginUtils.LOGIN_TOKEN, null);
@@ -72,14 +81,16 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
 		else {
 			mSwipeRefreshLayout.setRefreshing(true);
-			mT2LoginToken1 = mPrefs.getString(T2LoginUtils.LOGIN_TOKEN_1, null);
-			mT2LoginToken2 = mPrefs.getString(T2LoginUtils.LOGIN_TOKEN_1, null);
-			if (mT2LoginToken1 == null | mT2LoginToken2 == null) {
-				mAuthTask = new T2UserLoginTask(mGTLoginToken);
-				mAuthTask.execute((Void) null);
-			} else {
-				refreshData();
+			CookieManager cookieManager = new CookieManager();
+			CookieHandler.setDefault(cookieManager);
+			try {
+				cookieManager.getCookieStore().add(new URI("http://login.gatech.edu"), new HttpCookie(GTLoginUtils.LOGIN_TOKEN, mGTLoginToken));
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+				Snackbar.make(findViewById(R.id.content_main), R.string.error_unexpected, Snackbar.LENGTH_LONG).show();
 			}
+			mRefreshTask = new RefreshTask();
+			mRefreshTask.execute((Void) null);
 		}
 
 	}
@@ -92,8 +103,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 			if (resultCode == RESULT_OK) {
 				mGTLoginToken = data.getStringExtra(GTLoginUtils.LOGIN_TOKEN);
 				mPrefs.edit().putString(GTLoginUtils.LOGIN_TOKEN, mGTLoginToken).apply();
-				finish();
-				startActivity(getIntent());
+				mSwipeRefreshLayout.setRefreshing(true);
+				mRefreshTask = new RefreshTask();
+				mRefreshTask.execute((Void) null);
 			} else {
 				finish();
 			}
@@ -126,6 +138,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 		//noinspection SimplifiableIfStatement
 		if (id == R.id.action_settings) {
+			Snackbar.make(findViewById(R.id.content_main), R.string.not_implemented, Snackbar.LENGTH_LONG).show();
 			return true;
 		}
 
@@ -148,37 +161,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		return true;
 	}
 
-	public void refreshData () {
-		new T2LoginUtils(mT2LoginToken1, mT2LoginToken2).getUserId();
-		mSwipeRefreshLayout.setRefreshing(false);
-	}
+	public class RefreshTask extends AsyncTask<Void, Void, String> {
 
-	public class T2UserLoginTask extends AsyncTask<Void, Void, GTLoginUtils.LoginStatus> {
-
-		private final String mLoginToken;
-
-		T2UserLoginTask (String loginToken) {
-			mLoginToken = loginToken;
+		@Override
+		protected String doInBackground (Void... params) {
+			T2Utils.doLogin();
+			return T2Utils.User.getId();
 		}
 
 		@Override
-		protected GTLoginUtils.LoginStatus doInBackground (Void... params) {
-
-			return new GTLoginUtils().doT2Login(mLoginToken);
-
-		}
-
-		@Override
-		protected void onPostExecute (final GTLoginUtils.LoginStatus status) {
-			mAuthTask = null;
-			Snackbar.make(findViewById(R.id.fab), status.payload, Snackbar.LENGTH_INDEFINITE).show();
-			getPreferences(MODE_PRIVATE).edit().putString(T2LoginUtils.LOGIN_TOKEN_1, status.payload).putString(T2LoginUtils.LOGIN_TOKEN_2, status.payload2).apply();
-			refreshData();
+		protected void onPostExecute (final String userId) {
+			mRefreshTask = null;
+			Snackbar.make(findViewById(R.id.content_main), userId, Snackbar.LENGTH_LONG).show();
+			mSwipeRefreshLayout.setRefreshing(false);
 		}
 
 		@Override
 		protected void onCancelled () {
-			mAuthTask = null;
+			mRefreshTask = null;
 		}
 	}
 }

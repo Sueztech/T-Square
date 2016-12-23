@@ -11,25 +11,21 @@
     <string name="title_activity_login">Sign in</string>
 
     <!-- Strings related to login -->
-    <string name="prompt_email">Username</string>
+    <string name="prompt_username">Username</string>
     <string name="prompt_password">Password</string>
     <string name="action_sign_in">Sign In</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="error_invalid_email">This username is invalid</string>
-    <string name="error_invalid_password">This password is invalid</string>
-    <string name="error_incorrect_password">This username/password is incorrect</string>
+    <string name="error_incorrect_login">This username/password is incorrect</string>
     <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
 
-    <string name="error_unexpected">An unexpected error occurred.</string>
-    <string name="error_fetching_login">An error occurred while logging in.</string>
-    <string name="error_submitting_login">An error occurred while logging in.</string>
-    <string name="error_internet_access">No internet access detected.</string>
+    <string name="error_unexpected">An unexpected error occurred</string>
+    <string name="error_fetching_login">An error occurred while logging in</string>
+    <string name="error_submitting_login">An error occurred while logging in</string>
+    <string name="error_internet_access">No internet access detected</string>
 
     <string name="nav_logout">Logout</string>
 
     <string name="button_ok">OK</string>
+
+    <string name="not_implemented">Not implemented yet</string>
 
 </resources>

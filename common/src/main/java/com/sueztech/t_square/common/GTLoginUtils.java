@@ -5,9 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.CookieHandler;
@@ -26,9 +24,10 @@ public class GTLoginUtils {
 	public static final int ERR_SIGNINRQ = 4;
 
 	public static final String LOGIN_TOKEN = "CASTGT";
-	public static final String LOGIN_URL = "https://login.gatech.edu/cas/login";
 
-	public LoginStatus doGTLogin (String username, String password) {
+	private static final String LOGIN_URL = "https://login.gatech.edu/cas/login";
+
+	public static LoginStatus doLogin (String username, String password) {
 
 		CookieManager cookieManager = new CookieManager();
 		CookieHandler.setDefault(cookieManager);
@@ -38,7 +37,7 @@ public class GTLoginUtils {
 			document = Jsoup.connect(LOGIN_URL).get();
 		} catch (IOException e) {
 			e.printStackTrace();
-			return new LoginStatus(false, ERR_GETLOGIN, "", "");
+			return new LoginStatus(false, ERR_GETLOGIN);
 		}
 
 		String lt = "";
@@ -65,7 +64,7 @@ public class GTLoginUtils {
 					"&_eventId=" + URLEncoder.encode("submit", "UTF-8");
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
-			return new LoginStatus(false, ERR_UNEXPECT, "", "");
+			return new LoginStatus(false, ERR_UNEXPECT);
 		}
 
 		URL url;
@@ -75,7 +74,7 @@ public class GTLoginUtils {
 			urlConnection = (HttpURLConnection) url.openConnection();
 		} catch (IOException e) {
 			e.printStackTrace();
-			return new LoginStatus(false, ERR_PUTLOGIN, "", "");
+			return new LoginStatus(false, ERR_PUTLOGIN);
 		}
 
 		try {
@@ -87,91 +86,52 @@ public class GTLoginUtils {
 			out.print(formData);
 			out.close();
 
-			InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-			in.close();
+			urlConnection.getInputStream().close();
 			if (!url.getHost().equals(urlConnection.getURL().getHost())) {
-				return new LoginStatus(false, ERR_SIGNINRQ, "", "");
+				urlConnection.disconnect();
+				return new LoginStatus(false, ERR_SIGNINRQ);
 			}
 
 			for (HttpCookie cookie : cookieManager.getCookieStore().getCookies()) {
 				if (cookie.getName().equals(LOGIN_TOKEN)) {
 					urlConnection.disconnect();
-					return new LoginStatus(true, ERR_NOERROR, cookie.getValue(), "");
+					return new LoginStatus(true, cookie.getValue());
 				}
 			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
-			return new LoginStatus(false, ERR_PUTLOGIN, "", "");
-		} finally {
 			urlConnection.disconnect();
+			return new LoginStatus(false, ERR_PUTLOGIN);
 		}
 
-		return new LoginStatus(false, ERR_NOERROR, "", "");
+		urlConnection.disconnect();
+		return new LoginStatus(false);
 
 	}
 
-	public LoginStatus doT2Login (String loginToken) {
-
-		CookieManager cookieManager = new CookieManager();
-		CookieHandler.setDefault(cookieManager);
-
-		cookieManager.getCookieStore().add(null, new HttpCookie(LOGIN_TOKEN, loginToken));
-
-		URL url;
-		HttpURLConnection urlConnection;
-		try {
-			url = new URL(T2LoginUtils.LOGIN_URL);
-			urlConnection = (HttpURLConnection) url.openConnection();
-		} catch (IOException e) {
-			e.printStackTrace();
-			return new LoginStatus(false, ERR_PUTLOGIN, "", "");
-		}
-
-		try {
-
-			InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-			in.close();
-			if (!urlConnection.getURL().getHost().contains("gatech.edu")) {
-				return new LoginStatus(false, ERR_SIGNINRQ, "", "");
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			return new LoginStatus(false, ERR_PUTLOGIN, "", "");
-		} finally {
-			urlConnection.disconnect();
-		}
-
-		String payload = "";
-		String payload2 = "";
-		for (HttpCookie cookie : cookieManager.getCookieStore().getCookies()) {
-			if (cookie.getName().equals(T2LoginUtils.LOGIN_TOKEN_1)) {
-				payload = new HttpCookie(cookie.getName(), cookie.getValue()).toString();
-			} else if (cookie.getName().equals(T2LoginUtils.LOGIN_TOKEN_2)) {
-				payload2 = new HttpCookie(cookie.getName(), cookie.getValue()).toString();
-			}
-		}
-
-		System.out.println(HttpCookie.parse(payload).toString());
-		System.out.println(HttpCookie.parse(payload2).toString());
-
-		return new LoginStatus(true, ERR_NOERROR, payload, payload2);
-
-	}
-
-	public class LoginStatus {
+	public static final class LoginStatus {
 
 		public final boolean loggedIn;
 		public final int errorMsg;
 		public final String payload;
-		public final String payload2;
 
-		public LoginStatus (boolean loggedIn, int errorMsg, String payload, String payload2) {
+		private LoginStatus (boolean loggedIn, int errorMsg, String payload) {
 			this.loggedIn = loggedIn;
 			this.errorMsg = errorMsg;
 			this.payload = payload;
-			this.payload2 = payload;
+		}
+
+		private LoginStatus (boolean loggedIn, String payload) {
+			this(loggedIn, ERR_NOERROR, payload);
+		}
+
+		private LoginStatus (boolean loggedIn, int errorMsg) {
+			this(loggedIn, errorMsg, "");
+		}
+
+		private LoginStatus (boolean loggedIn) {
+			this(loggedIn, ERR_NOERROR);
 		}
 
 	}
