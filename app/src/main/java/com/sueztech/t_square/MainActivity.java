@@ -79,15 +79,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
 		mRecyclerView = (RecyclerView) findViewById(R.id.content_main);
 
-		// use this setting to improve performance if you know that changes
-		// in content do not change the layout size of the RecyclerView
 		//		mRecyclerView.setHasFixedSize(true);
 
-		// use a linear layout manager
 		mLayoutManager = new LinearLayoutManager(this);
 		mRecyclerView.setLayoutManager(mLayoutManager);
 
-		// specify an adapter (see also next example)
 		mDataset = new ArrayList<>();
 		mAdapter = new CourseAdapter(mDataset);
 		mRecyclerView.setAdapter(mAdapter);

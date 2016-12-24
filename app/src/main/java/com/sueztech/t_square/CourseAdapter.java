@@ -1,6 +1,7 @@
 package com.sueztech.t_square;
 
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,50 +12,65 @@ import org.json.JSONObject;
 
 import java.util.List;
 
-public class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder> {
+import static android.content.ContentValues.TAG;
+
+class CourseAdapter extends RecyclerView.Adapter<CourseAdapter.ViewHolder> {
 	private List<JSONObject> mDataset;
 
-	// Provide a suitable constructor (depends on the kind of dataset)
-	public CourseAdapter (List<JSONObject> myDataset) {
+	CourseAdapter (List<JSONObject> myDataset) {
 		mDataset = myDataset;
 	}
 
-	// Create new views (invoked by the layout manager)
 	@Override
 	public CourseAdapter.ViewHolder onCreateViewHolder (ViewGroup parent, int viewType) {
 		View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.cardview_course, parent, false);
-		ViewHolder vh = new ViewHolder(v);
-		return vh;
+		return new ViewHolder(v);
 	}
 
-	// Replace the contents of a view (invoked by the layout manager)
 	@Override
 	public void onBindViewHolder (ViewHolder holder, int position) {
-		try {
-			((TextView) holder.mCardView.findViewById(R.id.course_name)).setText(mDataset.get(position).getString("title"));
-			((TextView) holder.mCardView.findViewById(R.id.course_desc)).setText(mDataset.get(position).getString("shortDescription"));
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-
+		holder.setItem(mDataset.get(position));
 	}
 
-	// Return the size of your dataset (invoked by the layout manager)
 	@Override
 	public int getItemCount () {
 		return mDataset.size();
 	}
 
-	// Provide a reference to the views for each data item
-	// Complex data items may need more than one view per item, and
-	// you provide access to all the views for a data item in a view holder
-	public static class ViewHolder extends RecyclerView.ViewHolder {
+	static class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-		public View mCardView;
+		View mCardView;
+		TextView mNameView;
+		TextView mDescView;
+		JSONObject mJsonObject;
+		String mId;
+		String mName;
+		String mDesc;
 
-		public ViewHolder (View v) {
+		ViewHolder (View v) {
 			super(v);
+			v.setOnClickListener(this);
 			mCardView = v;
+			mNameView = (TextView) v.findViewById(R.id.course_name);
+			mDescView = (TextView) v.findViewById(R.id.course_desc);
+		}
+
+		public void setItem (JSONObject jsonObject) {
+			mJsonObject = jsonObject;
+			try {
+				mId = jsonObject.getString("id");
+				mName = jsonObject.getString("title");
+				mDesc = jsonObject.getString("shortDescription");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			mNameView.setText(mName);
+			mDescView.setText(mDesc);
+		}
+
+		@Override
+		public void onClick (View view) {
+			Log.d(TAG, "onClick " + getLayoutPosition() + " " + mId);
 		}
 	}
 }
