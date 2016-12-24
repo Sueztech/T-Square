@@ -1,10 +1,13 @@
 package com.sueztech.t_square.common;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class T2Utils {
 
@@ -33,7 +36,7 @@ public class T2Utils {
 
 	public static class User {
 
-		private static JSONObject mJson;
+		private static JSONObject mUserJson;
 
 		private User () {
 
@@ -47,38 +50,51 @@ public class T2Utils {
 				e.printStackTrace();
 				return false;
 			}
-			mJson = new JSONObject(userWeb);
+			mUserJson = new JSONObject(userWeb);
 			return true;
 		}
 
-		public static JSONObject getJson () {
-			return mJson;
-		}
-
 		public static String getId () {
-			return mJson.getString("id");
+			return mUserJson.getString("id");
 		}
 
 		public static String getUsername () {
-			return mJson.getString("displayId");
+			return mUserJson.getString("displayId");
 		}
 
-		public static class Name {
+		public static String getShortName () {
+			return mUserJson.getString("firstName");
+		}
 
-			private Name () {
+		public static String getFullName () {
+			return mUserJson.getString("displayName");
+		}
+
+		public static class Courses {
+
+			public static Map<String, JSONObject> mCourses = new LinkedHashMap<>();
+
+			private Courses () {
 
 			}
 
-			public static String getFirstName () {
-				return mJson.getString("firstName");
-			}
+			public static boolean refresh () {
 
-			public static String getLastName () {
-				return mJson.getString("lastName");
-			}
+				String coursesWeb;
+				try {
+					coursesWeb = Utils.fetchURL(API_DIRECT_URL + "/site.json");
+				} catch (IOException e) {
+					e.printStackTrace();
+					return false;
+				}
 
-			public static String getDisplayName () {
-				return mJson.getString("displayName");
+				JSONArray site_collection = new JSONObject(coursesWeb).getJSONArray("site_collection");
+				for (int i = 0; i < site_collection.length(); i++) {
+					JSONObject jsonObject = site_collection.getJSONObject(i);
+					mCourses.put(jsonObject.getString("id"), jsonObject);
+				}
+
+				return true;
 			}
 
 		}

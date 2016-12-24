@@ -13,6 +13,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -22,6 +24,8 @@ import android.widget.TextView;
 import com.sueztech.t_square.common.GTLoginUtils;
 import com.sueztech.t_square.common.T2Utils;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -29,6 +33,7 @@ import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -39,6 +44,10 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 	private String mGTLoginToken;
 
 	private SwipeRefreshLayout mSwipeRefreshLayout;
+	private RecyclerView mRecyclerView;
+	private RecyclerView.LayoutManager mLayoutManager;
+	private CourseAdapter mAdapter;
+	private ArrayList<JSONObject> mDataset;
 
 	private SharedPreferences mPrefs;
 
@@ -67,6 +76,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 				mRefreshTask.execute((Void) null);
 			}
 		});
+
+		mRecyclerView = (RecyclerView) findViewById(R.id.content_main);
+
+		// use this setting to improve performance if you know that changes
+		// in content do not change the layout size of the RecyclerView
+		//		mRecyclerView.setHasFixedSize(true);
+
+		// use a linear layout manager
+		mLayoutManager = new LinearLayoutManager(this);
+		mRecyclerView.setLayoutManager(mLayoutManager);
+
+		// specify an adapter (see also next example)
+		mDataset = new ArrayList<>();
+		mAdapter = new CourseAdapter(mDataset);
+		mRecyclerView.setAdapter(mAdapter);
 
 		try {
 			File httpCacheDir = new File(getCacheDir(), "http");
@@ -105,6 +129,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 				mGTLoginToken = data.getStringExtra(GTLoginUtils.LOGIN_TOKEN);
 				mPrefs.edit().putString(GTLoginUtils.LOGIN_TOKEN, mGTLoginToken).apply();
 				mSwipeRefreshLayout.setRefreshing(true);
+				CookieManager cookieManager = new CookieManager();
+				CookieHandler.setDefault(cookieManager);
+				try {
+					cookieManager.getCookieStore().add(new URI("http://login.gatech.edu"), new HttpCookie(GTLoginUtils.LOGIN_TOKEN, mGTLoginToken));
+				} catch (URISyntaxException e) {
+					e.printStackTrace();
+					Snackbar.make(findViewById(R.id.content_main), R.string.error_unexpected, Snackbar.LENGTH_LONG).show();
+				}
 				mRefreshTask = new RefreshTask();
 				mRefreshTask.execute((Void) null);
 			} else {
@@ -153,8 +185,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		int id = item.getItemId();
 
 		if (id == R.id.nav_logout) {
-			getPreferences(MODE_PRIVATE).edit().remove(GTLoginUtils.LOGIN_TOKEN).apply();
-			startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
+			doLogout();
 		}
 
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -162,8 +193,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		return true;
 	}
 
+	private void doLogout () {
+		getPreferences(MODE_PRIVATE).edit().remove(GTLoginUtils.LOGIN_TOKEN).apply();
+		startActivityForResult(new Intent(this, LoginActivity.class), LOGIN_REQUEST);
+	}
+
 	private void updateUserInfo () {
-		((TextView) findViewById(R.id.textViewName)).setText(T2Utils.User.Name.getDisplayName());
+		((TextView) findViewById(R.id.textViewName)).setText(T2Utils.User.getFullName());
 		((TextView) findViewById(R.id.textViewUser)).setText(T2Utils.User.getUsername());
 	}
 
@@ -173,14 +209,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 		protected String doInBackground (Void... params) {
 			T2Utils.doLogin();
 			T2Utils.User.refresh();
-			return T2Utils.User.Name.getFirstName();
+			T2Utils.User.Courses.refresh();
+			return T2Utils.User.getId();
 		}
 
 		@Override
-		protected void onPostExecute (final String firstName) {
+		protected void onPostExecute (final String userId) {
 			mRefreshTask = null;
-			Snackbar.make(findViewById(R.id.content_main), getString(R.string.welcome, firstName), Snackbar.LENGTH_LONG).show();
+			if (userId.equals("")) {
+				doLogout();
+				return;
+			}
+			Snackbar.make(findViewById(R.id.content_main), getString(R.string.welcome, T2Utils.User.getShortName()), Snackbar.LENGTH_LONG).show();
 			updateUserInfo();
+			mDataset.clear();
+			mDataset.addAll(T2Utils.User.Courses.mCourses.values());
+			mAdapter.notifyDataSetChanged();
 			mSwipeRefreshLayout.setRefreshing(false);
 		}
 
