@@ -44,7 +44,6 @@ public class LoginActivity extends AppCompatActivity {
 		setContentView(R.layout.activity_login);
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		// Set up the login form.
 		mUsernameView = (EditText) findViewById(R.id.username);
